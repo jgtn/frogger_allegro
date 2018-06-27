@@ -79,13 +79,16 @@ void *output_thread(void* pointer)
   ALLEGRO_BITMAP *pause_menu_bknd = NULL;   // background de menu de pausa
   ALLEGRO_BITMAP *game_bknd = NULL;        // background del juego
   ALLEGRO_BITMAP *arrow = NULL:            // bitmap del pointer de opciones (o resaltamos texto????)
-  ALLEGRO_BITMAP *frogBitmap = NULL;             // bitmap de la rana (SOLO UNO, no lo vamos a hacer como Lucas, NO me jodan)
-  ALLEGRO_BITMAP *car1 = NULL;            // bitmap de un tipo de auto
-  ALLEGRO_BITMAP *car2 = NULL;            // bitmap de otro tipo de auto
+  ALLEGRO_BITMAP *vertical_frog = NULL;    // bitmap de la rana vertical
+  ALLEGRO_BITMAP *side_frog = NULL         // bitmap de la rana horizontal
+  ALLEGRO_BITMAP *racecar = NULL;            // bitmap de un tipo de auto
+  ALLEGRO_BITMAP *electriccar = NULL;            // bitmap de otro tipo de auto
+  ALLEGRO_BITMAP *tractor = NULL;             // bitmap de otro tipo de auto
   ALLEGRO_BITMAP *truck = NULL;           // bitmap de un camión
-  ALLEGRO_BITMAP *wood = NULL;            // bitmap del tronco
-  ALLEGRO_BITMAP *heart_on = NULL;        // bitmap de vida de la rana
-  ALLEGRO_BITMAP *heart_off = NULL        // bitmap de vida perdida de la rana
+  ALLEGRO_BITMAP *long_wood = NULL;       // bitmap del tronco
+  ALLEGRO_BITMAP *wood = NULL;            //
+  ALLEGRO_BITMAP *short_wood = NULL;      //
+  ALLEGRO_BITMAP *livefrog = NULL;        // bitmap de vida de la rana
 
   if( !(start_menu_bknd = al_load_bitmap("start_menu_bknd.png")) )
   {
@@ -127,9 +130,9 @@ void *output_thread(void* pointer)
   	exit(-1);
   }
 
-  else if( !(frogBitmap = al_load_bitmap("frog.png")) )
+  else if( !(vertical_frog = al_load_bitmap("vertical_frog.png")) )
   {
-  	fprintf(stderr,"Unable to load frog.png\n");
+  	fprintf(stderr,"Unable to load vertical_frog.png\n");
   	al_uninstall_system();
   	al_shutdown_image_addon();
   	al_destroy_display(display);
@@ -137,9 +140,19 @@ void *output_thread(void* pointer)
   	exit(-1);
   }
 
-  else if( !(car1 = al_load_bitmap("car1.png")) )
+  else if( !(side_frog = al_load_bitmap("side_frog.png")) )
   {
-  	fprintf(stderr,"Unable to load car1.png\n");
+    fprintf(stderr,"Unable to load side_frog.png\n");
+    al_uninstall_system();
+    al_shutdown_image_addon();
+    al_destroy_display(display);
+
+    exit(-1);
+  }
+
+  else if( !(racecar = al_load_bitmap("racecar.png")) )
+  {
+  	fprintf(stderr,"Unable to load racecar.png\n");
   	al_uninstall_system();
   	al_shutdown_image_addon();
   	al_destroy_display(display);
@@ -147,14 +160,24 @@ void *output_thread(void* pointer)
   	exit(-1);
   }
 
-  else if( !(car2 = al_load_bitmap("car2.png")) )
+  else if( !(electriccar = al_load_bitmap("electriccar.png")) )
   {
-  	fprintf(stderr,"Unable to load car2.png\n");
+  	fprintf(stderr,"Unable to load electriccar.png\n");
   	al_uninstall_system();
   	al_shutdown_image_addon();
   	al_destroy_display(display);
 
   	exit(-1);
+  }
+
+  else if( !(tractor = al_load_bitmap("tractor.png")) )
+  {
+    fprintf(stderr,"Unable to load tractor.png\n");
+    al_uninstall_system();
+    al_shutdown_image_addon();
+    al_destroy_display(display);
+
+    exit(-1);
   }
 
   else if( !(truck = al_load_bitmap("truck.png")) )
@@ -177,9 +200,9 @@ void *output_thread(void* pointer)
   	exit(-1);
   }
 
-  else if( !(heart_on = al_load_bitmap("heart_on.png")) )
+  else if( !(long_wood = al_load_bitmap("long_wood.png")) )
   {
-    fprintf(stderr,"Unable to load heart_on.png\n");
+    fprintf(stderr,"Unable to load long_wood.png\n");
     al_uninstall_system();
     al_shutdown_image_addon();
     al_destroy_display(display);
@@ -187,9 +210,19 @@ void *output_thread(void* pointer)
     exit(-1);
   }
 
-  else if( !(wood = al_load_bitmap("heart_off.png")) )
+  else if( !(short_wood = al_load_bitmap("short_wood.png")) )
   {
-    fprintf(stderr,"Unable to load heart_off.png\n");
+    fprintf(stderr,"Unable to load short_wood.png\n");
+    al_uninstall_system();
+    al_shutdown_image_addon();
+    al_destroy_display(display);
+
+    exit(-1);
+  }
+
+  else if( !(livefrog = al_load_bitmap("livefrog.png")) )
+  {
+    fprintf(stderr,"Unable to load livefrog.png\n");
     al_uninstall_system();
     al_shutdown_image_addon();
     al_destroy_display(display);
@@ -204,7 +237,7 @@ void *output_thread(void* pointer)
   al_flip_display();                                 //inicializo display en negro
 
   /******************INICICIALIZACIÓN DE JUEGO*********************/
-  al_frog_t frog = {.x_pos = INIT_X, .lane = INIT_Y, .orientation = UP, .x_size = al_get_bitmap_width(frog), .y_size = al_get_bitmap_height(frog)}; // inicializo estructura rana
+  al_frog_t frog = {.x_pos = INIT_X, .lane = INIT_Y, .orientation = UP, .x_size = FROG_W, .y_size = FROG_H}; // inicializo estructura rana
 
   al_car_t carsArray[NOFCARS];                                                  // creo arreglo de estructuras auto
 
@@ -217,28 +250,20 @@ void *output_thread(void* pointer)
   {
     if( (pGameData->currentState->stateID == START_PLAY_ID || pGameData->currentState->stateID == START_QUIT_ID || pGameData->currentState->stateID == START_SCOREBOARD_ID) && !pGameData->quitGame )//START MENU
     {
-      al_draw_scaled_bitmap(start_menu_bknd,
-                                            0,0,al_get_bitmap_width(start_menu_bknd),al_get_bitmap_height(start_menu_bknd),
-                                            0,0,al_get_display_width(display),al_get_display_height(display),NULL);           // Dibujo background menu ppal
+      al_draw_bitmap(start_menu_bknd,0,0,NOFLAGS);           // Dibujo background menu ppal
 
       switch(pGameData->currentState->stateID)
       {
         case START_PLAY_ID:
-        al_draw_scaled_bitmap(arrow,
-                                              0,0,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),
-                                              START_PLAY_X,START_PLAY_Y,al_get_display_width(display),al_get_display_height(display),NULL);           // Dibujo arrow
+        al_draw_bitmap(arrow,ARROW_X,START_PLAY_Y,NOFLAGS);      // Dibujo arrow
           break;
 
        case START_SCOREBOARD_ID:
-       al_draw_scaled_bitmap(arrow,
-                                             0,0,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),
-                                             START_SCOREBOARD_X,START_SCOREBOARD_Y,al_get_display_width(display),al_get_display_height(display),NULL);           // Dibujo arrow
+       al_draw_bitmap(arrow,ARROW_X,START_SCOREBOARD_Y,NOFLAGS);    // Dibujo arrow
          break;
 
        case START_QUIT_ID:
-       al_draw_scaled_bitmap(arrow,
-                                             0,0,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),
-                                             START_QUIT_X,START_QUIT_Y,al_get_display_width(display),al_get_display_height(display),NULL);           // Dibujo arrow
+       al_draw_bitmap(arrow,ARROW_X,START_QUIT_Y,NOFLAGS);   // Dibujo arrow
         break;
       }
 
@@ -262,9 +287,7 @@ void *output_thread(void* pointer)
     else if( (pGameData->currentState->stateID == GAME_ID) && !pGameData->quitGame )  //GAMEPLAY
     {
 
-      al_draw_scaled_bitmap(game_bknd,
-                                            0,0,al_get_bitmap_width(game_bknd),al_get_bitmap_height(game_bknd),
-                                            0,0,al_get_display_width(display),al_get_display_height(display),NULL);           // Dibujo background de juego
+      al_draw_bitmap(game_bknd,0,0,NOFLAGS);          // Dibujo background de juego
 
       //drawLives(pGameData->lives); ya lo hice al final
 
@@ -339,25 +362,29 @@ void *output_thread(void* pointer)
       {
         /**************************** DIBUJO BACKGROUND ********************************************/
         al_clear_to_color(BLACK);                             // borro display (backbuffer)
-        al_draw_scaled_bitmap(game_bknd,
-                                              0,0,al_get_bitmap_width(game_bknd),al_get_bitmap_height(game_bknd),
-                                              0,0,al_get_display_width(display),al_get_display_height(display),NULL);           // Dibujo background de juego
+        al_draw_bitmap(game_bknd,0,0,NOFLAGS);           // Dibujo background de juego
         /**************************** DIBUJO AUTOS ********************************************/
         int i;
         for(i=0 ; i<NOFCARS ; i++)
         {
           switch((carsArray+i)->type)
           {
-            case CAR1:
-              al_draw_scaled_bitmap(car1,
-                                                    al_get_bitmap_width(car1)/2,al_get_bitmap_height(car1)/2,al_get_bitmap_width(car1),al_get_bitmap_height(car1),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(car1),al_get_display_height(car1),NULL);
+            case RACECAR:
+              al_draw_scaled_bitmap(racecar,
+                                                    al_get_bitmap_width(racecar)/2,al_get_bitmap_height(racecar)/2,al_get_bitmap_width(racecar),al_get_bitmap_height(racecar),
+                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(racecar),al_get_display_height(racecar),NULL);
               break;
 
-            case CAR2:
-              al_draw_scaled_bitmap(car2,
-                                                    al_get_bitmap_width(car2)/2,al_get_bitmap_height(car2)/2,al_get_bitmap_width(car2),al_get_bitmap_height(car2),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(car2),al_get_display_height(car2),NULL);
+            case ELECTRICCAR:
+              al_draw_scaled_bitmap(electriccar,
+                                                    al_get_bitmap_width(electriccar)/2,al_get_bitmap_height(electriccar)/2,al_get_bitmap_width(electriccar),al_get_bitmap_height(electriccar),
+                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(electriccar),al_get_display_height(electriccar),NULL);
+              break;
+
+            case TRACTOR:
+              al_draw_scaled_bitmap(electriccar,
+                                                    al_get_bitmap_width(tractor)/2,al_get_bitmap_height(tractor)/2,al_get_bitmap_width(tractor),al_get_bitmap_height(tractor),
+                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(tractor),al_get_display_height(tractor),NULL);
               break;
 
             case TRUCK:
@@ -371,20 +398,52 @@ void *output_thread(void* pointer)
                                                     al_get_bitmap_width(wood)/2,al_get_bitmap_height(wood)/2,al_get_bitmap_width(wood),al_get_bitmap_height(wood),
                                                     (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(wood),al_get_display_height(wood),NULL);
               break;
+
+            case LONG_WOOD:
+              al_draw_scaled_bitmap(wood,
+                                                    al_get_bitmap_width(long_wood)/2,al_get_bitmap_height(long_wood)/2,al_get_bitmap_width(long_wood),al_get_bitmap_height(long_wood),
+                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(long_wood),al_get_display_height(long_wood),NULL);
+              break;
+
+            case SHORT_WOOD:
+              al_draw_scaled_bitmap(wood,
+                                                    al_get_bitmap_width(short_wood)/2,al_get_bitmap_height(short_wood)/2,al_get_bitmap_width(short_wood),al_get_bitmap_height(short_wood),
+                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(short_wood),al_get_display_height(short_wood),NULL);
+              break;
+
           }
         }
 
         /**************************** DIBUJO RANA ********************************************/
-        al_draw_scaled_bitmap(frogBitmap,
-                                              al_get_bitmap_width(frogBitmap)/2,al_get_bitmap_height(frogBitmap)/2,al_get_bitmap_width(frogBitmap),al_get_bitmap_height(frogBitmap),
-                                              frog->x_pos,frog->lane,al_get_display_width(frogBitmap),al_get_display_height(frogBitmap),NULL);
+
+        if(frog.orientation == UP || frog.orientation == DOWN)
+        {
+          al_draw_scaled_bitmap(vertical_frog,
+                                                al_get_bitmap_width(vertical_frog)/2,al_get_bitmap_height(vertical_frog)/2,al_get_bitmap_width(vertical_frog),al_get_bitmap_height(vertical_frog),
+                                                frog->x_pos,frog->lane,al_get_display_width(vertical_frog),al_get_display_height(vertical_frog),NULL);
+        }
+
+        else if(frog.orientation == LEFT || frog.orientation == RIGHT)
+        {
+          al_draw_scaled_bitmap(side_frog,
+                                                al_get_bitmap_width(side_frog)/2,al_get_bitmap_height(side_frog)/2,al_get_bitmap_width(side_frog),al_get_bitmap_height(side_frog),
+                                                frog->x_pos,frog->lane,al_get_display_width(side_frog),al_get_display_height(side_frog),NULL);
+        }
+
+        else
+        {
+          fprintf(stderr, "wrong frog orientation!\n");
+          exit(-1);
+        }
+
+
 // orientación?
         /**************************** DIBUJO VIDAS ********************************************/
         switch(pGameData->lives)
         {
           case 1: // live1 ON; live2 OFF; live3 OFF
-            al_draw_scaled_bitmap(heart_on,
-                                                  al_get_bitmap_width(heart_on)/2,al_get_bitmap_height(heart_on)/2,al_get_bitmap_width(heart_on),al_get_bitmap_height(heart_on),
+            al_draw_scaled_bitmap(livefrog,
+                                                  al_get_bitmap_width(livefrog)/2,al_get_bitmap_height(livefrog)/2,al_get_bitmap_width(livefrog),al_get_bitmap_height(livefrog),
                                                   LIVE1_X,LIVES_Y,al_get_display_width(display),al_get_display_height(display),NULL);
             al_draw_scaled_bitmap(heart_off,
                                                   al_get_bitmap_width(heart_off)/2,al_get_bitmap_height(heart_off)/2,al_get_bitmap_width(heart_off),al_get_bitmap_height(heart_off),
@@ -396,12 +455,12 @@ void *output_thread(void* pointer)
             break;
 
           case 2: // live1 ON; live2 ON; live3 OFF
-            al_draw_scaled_bitmap(heart_on,
-                                                  al_get_bitmap_width(heart_on)/2,al_get_bitmap_height(heart_on)/2,al_get_bitmap_width(heart_on),al_get_bitmap_height(heart_on),
-                                                  LIVE1_X,LIVES_Y,al_get_display_width(heart_on),al_get_display_height(heart_on),NULL);
-            al_draw_scaled_bitmap(heart_on,
-                                                  al_get_bitmap_width(heart_on)/2,al_get_bitmap_height(heart_on)/2,al_get_bitmap_width(heart_on),al_get_bitmap_height(heart_on),
-                                                  LIVE2_X,LIVES_Y,al_get_display_width(heart_on),al_get_display_height(heart_on),NULL);
+            al_draw_scaled_bitmap(livefrog,
+                                                  al_get_bitmap_width(livefrog)/2,al_get_bitmap_height(livefrog)/2,al_get_bitmap_width(livefrog),al_get_bitmap_height(livefrog),
+                                                  LIVE1_X,LIVES_Y,al_get_display_width(livefrog),al_get_display_height(livefrog),NULL);
+            al_draw_scaled_bitmap(livefrog,
+                                                  al_get_bitmap_width(livefrog)/2,al_get_bitmap_height(livefrog)/2,al_get_bitmap_width(livefrog),al_get_bitmap_height(livefrog),
+                                                  LIVE2_X,LIVES_Y,al_get_display_width(livefrog),al_get_display_height(livefrog),NULL);
 
             al_draw_scaled_bitmap(heart_off,
                                                   al_get_bitmap_width(heart_off)/2,al_get_bitmap_height(heart_off)/2,al_get_bitmap_width(heart_off),al_get_bitmap_height(heart_off),
@@ -409,16 +468,16 @@ void *output_thread(void* pointer)
             break;
 
           case 3: // live1 ON; live2 ON; live3 ON
-            al_draw_scaled_bitmap(heart_on,
-                                                  al_get_bitmap_width(heart_on)/2,al_get_bitmap_height(heart_on)/2,al_get_bitmap_width(heart_on),al_get_bitmap_height(heart_on),
-                                                  LIVE1_X,LIVES_Y,al_get_display_width(heart_on),al_get_display_height(heart_on),NULL);
-            al_draw_scaled_bitmap(heart_on,
-                                                  al_get_bitmap_width(heart_on)/2,al_get_bitmap_height(heart_on)/2,al_get_bitmap_width(heart_on),al_get_bitmap_height(heart_on),
-                                                  LIVE2_X,LIVES_Y,al_get_display_width(heart_on),al_get_display_height(heart_on),NULL);
+            al_draw_scaled_bitmap(livefrog,
+                                                  al_get_bitmap_width(livefrog)/2,al_get_bitmap_height(livefrog)/2,al_get_bitmap_width(livefrog),al_get_bitmap_height(livefrog),
+                                                  LIVE1_X,LIVES_Y,al_get_display_width(livefrog),al_get_display_height(livefrog),NULL);
+            al_draw_scaled_bitmap(livefrog,
+                                                  al_get_bitmap_width(livefrog)/2,al_get_bitmap_height(livefrog)/2,al_get_bitmap_width(livefrog),al_get_bitmap_height(livefrog),
+                                                  LIVE2_X,LIVES_Y,al_get_display_width(livefrog),al_get_display_height(livefrog),NULL);
 
-            al_draw_scaled_bitmap(heart_on,
-                                                  al_get_bitmap_width(heart_on)/2,al_get_bitmap_height(heart_on)/2,al_get_bitmap_width(heart_on),al_get_bitmap_height(heart_on),
-                                                  LIVE3_X,LIVES_Y,al_get_display_width(heart_on),al_get_display_height(heart_on),NULL);
+            al_draw_scaled_bitmap(livefrog,
+                                                  al_get_bitmap_width(livefrog)/2,al_get_bitmap_height(livefrog)/2,al_get_bitmap_width(livefrog),al_get_bitmap_height(livefrog),
+                                                  LIVE3_X,LIVES_Y,al_get_display_width(livefrog),al_get_display_height(livefrog),NULL);
             break;
         }
 
@@ -674,9 +733,9 @@ void moveCars(void *Cpointer, void *Fpointer,int way, int NofCars, int lane)
   al_lane_t *p2lane = Lpointer;
   int i,j;
 
-if(lane == checkBitmapcollision(&p2carslist,&p2frog,NofCars) && lane < BUFFER_LANE_Y)                             // si la rana colisiona con el auto, y estamos en la parte superior del tablero
+if(lane == isInside(&p2carslist,&p2frog,NofCars) && lane < BUFFER_LANE_Y)                             // si la rana colisiona con el auto, y estamos en la parte superior del tablero
 {
-  if(lane == LEFT)
+  if(way == LEFT)
   {
     if((p2frog->x_pos)-((p2frog->x_size)/2) <= FROG_X_MIN)                                                       //si la rana está en el borde izquierdo...
     {
@@ -796,6 +855,48 @@ for(i=0 ; i<NofCars ; i++)                                                      
   }*/
 }
 
+
+
+/********************************************************************************
+FUNCION isInside()
+Esta función consulta si el bitmap de la rana se encuentra TOTALMENTE DENTRO del bitmap
+de algun auto en un carril determinado.
+
+RECIBE:
+  + puntero void a arreglo de autos.
+  + puntero void a estructura de la rana.
+  + número de autos que están en el arreglo
+
+DEVUELVE:
+  + carril en donde se encuentra la rana
+  + int 0 caso contrario
+
+********************************************************************************/
+
+int isInside(void *Cpointer, void *Fpointer, int NofCars) // agregar proteccion contra bordes !!!!!!!!!!!!!!!!!!!!!!!1
+{
+	al_car_t *p2carslist = Cpointer;
+	al_frog_t *p2frog = Fpointer;
+  uint8_t frogedge1 = (p2frog->x_pos)+0.5*(p2frog->x_size);
+  uint8_t frogedge2 = (p2frog->x_pos)-0.5*(p2frog->x_size);
+	uint8_t i;
+
+	for(i=0 ; i<NofCars ; i++) // barrido de la lista de autos
+	{
+		if(p2frog->lane == (p2carslist+i)->lane) // si la rana y el auto están en el mismo carril...
+		{
+      caredgeMIN = (((p2carslist+i)->x_pos)-0.5*((p2carslist+i)->x_size)); // asigno bordes del tronco
+      caredgeMAX = (((p2carslist+i)->x_pos)+0.5*((p2carslist+i)->x_size)); // para mejor lectura del argumento del condicional
+
+			if((frogedge1 >= caredgeMIN )&&(frogedge1 <= caredgeMAX)&&(frogedge2 >= caredgeMIN)&&(frogedge2 <= caredgeMAX))
+      {
+        return (p2frog->lane); // si ambos bordes de la rana están contenidos en el tronco, entonces la misma está posicionada totalmente encima del bitmap tronco.
+      }
+		}
+	}
+
+  return 0: // devuelvo 0 si la rana no está contenida en un tronco
+}
 /********************************************************************************
 FUNCION getLaneWay()
 Esta función nos dice para que lado se mueve un determinado carril
@@ -842,49 +943,49 @@ void moveFrog(uint8_t where,frog_t *frogCoords)
   switch(where)
   {
       case FROG_UP:
-          if(frogCoords->lane - frogCoords->y_size/2 > FROG_Y_MIN)
+          if(frogCoords->lane > END_LANE_Y)
           {
               frogCoords->lane-= FROGSTEP_Y;
           }
-          else if(frogCoords->lane - frogCoords->y_size/2 < FROG_Y_MIN)
+          else if(frogCoords->lane <= END_LANE_Y)
           {
-              frogCoords->lane = FROG_Y_MIN;
+              frogCoords->lane = END_LANE_Y;
           }
           frogCoords->orientation = UP;
           break;
 
       case FROG_DOWN:
-          if(frogCoords->lane + frogCoords->y_size/2 < FROG_Y_MAX)
+          if(frogCoords->lane < START_LANE_Y)
           {
               frogCoords->lane += FROGSTEP_Y;
           }
-          else if(frogCoords->lane + frogCoords->y_size/2 > FROG_Y_MAX)
+          else if(frogCoords->lane >= START_LANE_Y)
           {
-              frogCoords->lane = FROG_Y_MAX;
+              frogCoords->lane = START_LANE_Y;
           }
           frogCoords->orientation = DOWN;
           break;
 
       case FROG_RIGHT:
-          if(frogCoords->x + frogCoords->x_size/2 < FROG_X_MAX)
+          if(frogCoords->x + frogCoords->x_size < FROG_X_MAX)
           {
               frogCoords->x += FROGSTEP_X;
           }
           else if(frogCoords->x + frogCoords->x_size/2 > FROG_X_MAX)
           {
-              frogCoords->x = FROG_X_MAX;
+              frogCoords->x = (FROG_X_MAX - frogCoords->x_size/2);
           }
           frogCoords->orientation = RIGHT;
           break;
 
       case FROG_LEFT:
-          if(frogCoords->x - frogCoords->x_size/2 > FROG_X_MIN)
+          if(frogCoords->x - frogCoords->x_size > FROG_X_MIN)
           {
               frogCoords->x -= FROGSTEP_X;
           }
           else if(frogCoords->x - frogCoords->x_size/2 < FROG_X_MIN)   //programacion defensiva
           {
-              frogCoords->x = FROG_X_MIN;
+              frogCoords->x = (FROG_X_MIN + frogCoords->x_size/2);
           }
           frogCoords->orientation = LEFT;
           break;
