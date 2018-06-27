@@ -33,7 +33,7 @@
 
 /********* COORDINATES CONSTANTS ***********/
 
-#define START_PLAY_X // coordenadas de los strings para colocar el arroe pointer
+#define START_PLAY_X // coordenadas de los strings para colocar el arrow pointer
 #define START_PLAY_Y
 #define START_SCOREBOARD_X
 #define START_SCOREBOARD_Y
@@ -89,7 +89,7 @@ typedef struct car  //  estructura que contiene datos de los bitmaps asociados a
   uint8_t x_pos; // coordenadas al CENTRO del carril ( y del bitmap)
   uint8_t lane;   // número de carril
   uint8_t x_size; // largo del bitmap, para analizar colisiones
-  uint8_t type
+  uint8_t type;
 } al_car_t;
 
 typedef struct frog
