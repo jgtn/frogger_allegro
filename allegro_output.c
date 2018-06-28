@@ -1,4 +1,4 @@
-#include "allegro_output.h"
+x_pos#include "allegro_output.h"
 
 /*****************************************************************
 Thread output_thread() (Allegro)
@@ -10,6 +10,10 @@ Devuelve:
 + Nada
 
 ******************************************************************/
+int checkBitmapcollision(void *Cpointer, void *Fpointer, int NofCars);
+void carsRoutine(void *Cpointer, void *Fpointer, int NofCars);
+void moveFrog(uint8_t where,al_frog_t *frogCoords);
+int isInside(void *Cpointer, void *Fpointer, int NofCars);
 
 
 void *output_thread(void* pointer)
@@ -42,7 +46,7 @@ void *output_thread(void* pointer)
     exit(-1);
   }
 
-  else if(!(al_cars_timer = al_create_timer(al_cars_timer)))
+  else if(!(al_cars_timer = al_create_timer(CARS_TIMER)))
   {
     fprintf(stderr,"Failed to initialize cars timer\n");
     al_destroy_event_queue(output_queue);
@@ -58,7 +62,7 @@ void *output_thread(void* pointer)
     exit(-1);
   }
 
-  else if(!(display = al_create_display(DHEIGHT,DWIDTH)))
+  else if(!(display = al_create_display(DWIDTH,DHEIGHT)))
   {
     fprintf(stderr,"Failed to initialize display\n");
     al_destroy_event_queue(output_queue);
@@ -80,7 +84,7 @@ void *output_thread(void* pointer)
   ALLEGRO_BITMAP *game_bknd = NULL;        // background del juego
   ALLEGRO_BITMAP *arrow = NULL:            // bitmap del pointer de opciones (o resaltamos texto????)
   ALLEGRO_BITMAP *vertical_frog = NULL;    // bitmap de la rana vertical
-  ALLEGRO_BITMAP *side_frog = NULL         // bitmap de la rana horizontal
+  ALLEGRO_BITMAP *side_frog = NULL;         // bitmap de la rana horizontal
   ALLEGRO_BITMAP *racecar = NULL;            // bitmap de un tipo de auto
   ALLEGRO_BITMAP *electriccar = NULL;            // bitmap de otro tipo de auto
   ALLEGRO_BITMAP *tractor = NULL;             // bitmap de otro tipo de auto
@@ -239,12 +243,15 @@ void *output_thread(void* pointer)
   /******************INICICIALIZACIÓN DE JUEGO*********************/
   al_frog_t frog = {.x_pos = INIT_X, .lane = INIT_Y, .orientation = UP, .x_size = FROG_W, .y_size = FROG_H}; // inicializo estructura rana
 
-  al_car_t carsArray[NOFCARS];                                                  // creo arreglo de estructuras auto
-
+  al_car_t carsArray[NOFCARS] = {{},{},{},{},{},{},{},{},{},{}};                                                // creo arreglo de estructuras auto
   //INICIALIZAR AUTOS
+  //al_lastlane_t lastLaneStuff[]={{rectangulito},{cuadrado},{cuadrado},{cuadrado},{rectangulito},{rana},{rana},{rana},{rana},{rana}};
 
 
   /******************THREAD - MANEJO DE ESTADOS***************************************/
+
+  al_start_timer(al_display_timer); // arranco timers
+  al_start_timer(al_cars_timer);
 
   while(!pGameData->quitGame) //SERÍA CONVENIENTE PODER CERRAR EL DISPLAY Y QUE TERMINE EL JUEGO -> EVENTO DE ALLEGRO -> traducir a evento de quitGame
   {
@@ -257,19 +264,19 @@ void *output_thread(void* pointer)
         case START_PLAY_ID:
           al_draw_scaled_bitmap(arrow,
                                                 al_get_bitmap_width(arrow)/2,al_get_bitmap_height(arrow)/2,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),
-                                                ARROW_X,START_PLAY_Y,al_get_display_width(arrow),al_get_display_height(arrow),NOFLAGS);    // Dibujo arrow
+                                                ARROW_X,START_PLAY_Y,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),NOFLAGS);    // Dibujo arrow
           break;
 
        case START_SCOREBOARD_ID:
        al_draw_scaled_bitmap(arrow,
                                              al_get_bitmap_width(arrow)/2,al_get_bitmap_height(arrow)/2,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),
-                                             ARROW_X,START_SCOREBOARD_Y,al_get_display_width(arrow),al_get_display_height(arrow),NOFLAGS);    // Dibujo arrow
+                                             ARROW_X,START_SCOREBOARD_Y,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),NOFLAGS);    // Dibujo arrow
          break;
 
        case START_QUIT_ID:
        al_draw_scaled_bitmap(arrow,
                                              al_get_bitmap_width(arrow)/2,al_get_bitmap_height(arrow)/2,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),
-                                             ARROW_X,START_QUIT_Y,al_get_display_width(arrow),al_get_display_height(arrow),NOFLAGS);    // Dibujo arrow
+                                             ARROW_X,START_QUIT_Y,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),NOFLAGS);    // Dibujo arrow
         break;
       }
 
@@ -277,7 +284,8 @@ void *output_thread(void* pointer)
       {
         al_flip_display();
         dispTimer = false;
-      }// traducir a eventos de allegro
+      }
+
       if(displayClose)
       {
           pGameData->quitGame = true;
@@ -295,11 +303,10 @@ void *output_thread(void* pointer)
 
       al_draw_bitmap(game_bknd,0,0,NOFLAGS);          // Dibujo background de juego
 
-      //drawLives(pGameData->lives); ya lo hice al final
 
       if(carsTimer)  // si se produce un evento de timer, muevo los autos.
       {
-        carsRoutine(&carArray,&frog,NOFCARS);        // llamo a función que mueve los autos y la rana, si es necesario.
+        carsRoutine(&carsArray,&frog,NOFCARS);        // llamo a función que mueve los autos y la rana, si es necesario.
         carsTimer = false;                                        // acknowledge
       }
 
@@ -309,7 +316,7 @@ void *output_thread(void* pointer)
         pGameData->moveFrog.flag = false;                         //acknowledge
       }
 
-      if(checkBitmapcollision(&carArray,&frog,NOFCARS) && frog.lane > BUFFER_LANE_Y)  // choque en la parte inferior del tablero (autos)
+      if(checkBitmapcollision(&carsArray,&frog,NOFCARS) && frog.lane > BUFFER_LANE_Y)  // choque en la parte inferior del tablero (autos)
       {
         pGameData->lives--;                                      //si choco, decremento las vidas
         /*if(pGameData->lives--)
@@ -325,7 +332,7 @@ void *output_thread(void* pointer)
       }
 
 
-      else if(!checkBitmapcollision(&carArray,&frog,NOFCARS) && (frog.lane < BUFFER_LANE_Y && frog.lane > END_LANE_Y)) // choque en la parte superior del tablero
+      else if(!checkBitmapcollision(&carsArray,&frog,NOFCARS) && (frog.lane < BUFFER_LANE_Y && frog.lane > END_LANE_Y)) // choque en la parte superior del tablero
       {
         pGameData->lives--;
         /*if(pGameData->lives--)
@@ -343,25 +350,31 @@ void *output_thread(void* pointer)
 
       else if(frog.lane == END_LANE_Y)
       {
-        if(checkBitmapcollision(&carArray,&frog,NOFCARS) == END_LANE_Y)
+        if(checkBitmapcollision(&carsArray,&frog,NOFCARS) == END_LANE_Y)
         {
           pGameData->lives--;
         }
         else
         {
+          // escribir la rana en la posición a la que llegó
           // volver la rana a inicio.
-          // escribir la rana en la posición a la que llegó.
-          // sumar puntaje
+          frog.x_pos = INIT_X;
+          frog.lane = INIT_Y;
 
-          //vote a Stolbizer (gané)
-          if( !emit_event(pGameData->pEventQueue,WIN_EVENT) )   //si la rana ganó, entonces le aviso al kernel
+
+          // sumar puntaje
+          pGameData->score =+ 100;
+          //vote a Stolbizer (gané)?
+
+
+          if( !emit_event(pGameData->pEventQueue,ARRIVE_EVENT) )   //si la rana ganó, entonces le aviso al kernel
           {
-              printf("Coludn't emit WIN event\n");
+              printf("Coludn't emit ARRIVE event\n");
 
           }
         }
 
-        //checkFrogCollision(frog.lane,&carArray,&frog,NOFCARS): return (checkBitmapcollision(&carArray,&frog,NOFCARS) && frog.lane > BUFFER_LANE_Y) || (!checkBitmapcollision(&carArray,&frog,NOFCARS) && (frog.lane < BUFFER_LANE_Y && frog.lane > END_LANE_Y)) || ((frog.lane == END_LANE_Y) && (checkBitmapcollision(&carArray,&frog,NOFCARS) == END_LANE_Y)
+        //checkFrogCollision(frog.lane,&carsArray,&frog,NOFCARS): return (checkBitmapcollision(&carsArray,&frog,NOFCARS) && frog.lane > BUFFER_LANE_Y) || (!checkBitmapcollision(&carsArray,&frog,NOFCARS) && (frog.lane < BUFFER_LANE_Y && frog.lane > END_LANE_Y)) || ((frog.lane == END_LANE_Y) && (checkBitmapcollision(&carsArray,&frog,NOFCARS) == END_LANE_Y)
       }
 
       if(dispTimer)                                           // imprimo tablero
@@ -378,43 +391,43 @@ void *output_thread(void* pointer)
             case RACECAR:
               al_draw_scaled_bitmap(racecar,
                                                     al_get_bitmap_width(racecar)/2,al_get_bitmap_height(racecar)/2,al_get_bitmap_width(racecar),al_get_bitmap_height(racecar),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(racecar),al_get_display_height(racecar),NOFLAGS);
+                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(racecar),al_get_bitmap_height(racecar),NOFLAGS);
               break;
 
             case ELECTRICCAR:
               al_draw_scaled_bitmap(electriccar,
                                                     al_get_bitmap_width(electriccar)/2,al_get_bitmap_height(electriccar)/2,al_get_bitmap_width(electriccar),al_get_bitmap_height(electriccar),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(electriccar),al_get_display_height(electriccar),NOFLAGS);
+                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(electriccar),al_get_bitmap_height(electriccar),NOFLAGS);
               break;
 
             case TRACTOR:
               al_draw_scaled_bitmap(electriccar,
                                                     al_get_bitmap_width(tractor)/2,al_get_bitmap_height(tractor)/2,al_get_bitmap_width(tractor),al_get_bitmap_height(tractor),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(tractor),al_get_display_height(tractor),NOFLAGS);
+                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(tractor),al_get_bitmap_height(tractor),NOFLAGS);
               break;
 
             case TRUCK:
               al_draw_scaled_bitmap(truck,
                                                     al_get_bitmap_width(truck)/2,al_get_bitmap_height(truck)/2,al_get_bitmap_width(truck),al_get_bitmap_height(truck),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(truck),al_get_display_height(truck),NOFLAGS);
+                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(truck),al_get_bitmap_height(truck),NOFLAGS);
               break;
 
             case WOOD:
               al_draw_scaled_bitmap(wood,
                                                     al_get_bitmap_width(wood)/2,al_get_bitmap_height(wood)/2,al_get_bitmap_width(wood),al_get_bitmap_height(wood),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(wood),al_get_display_height(wood),NOFLAGS);
+                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(wood),al_get_bitmap_height(wood),NOFLAGS);
               break;
 
             case LONG_WOOD:
               al_draw_scaled_bitmap(wood,
                                                     al_get_bitmap_width(long_wood)/2,al_get_bitmap_height(long_wood)/2,al_get_bitmap_width(long_wood),al_get_bitmap_height(long_wood),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(long_wood),al_get_display_height(long_wood),NOFLAGS);
+                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(long_wood),al_get_bitmap_height(long_wood),NOFLAGS);
               break;
 
             case SHORT_WOOD:
               al_draw_scaled_bitmap(wood,
                                                     al_get_bitmap_width(short_wood)/2,al_get_bitmap_height(short_wood)/2,al_get_bitmap_width(short_wood),al_get_bitmap_height(short_wood),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_display_width(short_wood),al_get_display_height(short_wood),NOFLAGS);
+                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(short_wood),al_get_bitmap_height(short_wood),NOFLAGS);
               break;
 
           }
@@ -426,14 +439,14 @@ void *output_thread(void* pointer)
         {
           al_draw_scaled_bitmap(vertical_frog,
                                                 al_get_bitmap_width(vertical_frog)/2,al_get_bitmap_height(vertical_frog)/2,al_get_bitmap_width(vertical_frog),al_get_bitmap_height(vertical_frog),
-                                                frog->x_pos,frog->lane,al_get_display_width(vertical_frog),al_get_display_height(vertical_frog),(frog.orientation == UP ? NOFLAGS : ALLEGRO_FLIP_VERTICAL));
+                                                frog.x_pos,frog.lane,al_get_bitmap_width(vertical_frog),al_get_bitmap_height(vertical_frog),(frog.orientation == UP ? NOFLAGS : ALLEGRO_FLIP_VERTICAL));
         }
 
         else if(frog.orientation == LEFT || frog.orientation == RIGHT)
         {
           al_draw_scaled_bitmap(side_frog,
                                                 al_get_bitmap_width(side_frog)/2,al_get_bitmap_height(side_frog)/2,al_get_bitmap_width(side_frog),al_get_bitmap_height(side_frog),
-                                                frog->x_pos,frog->lane,al_get_display_width(side_frog),al_get_display_height(side_frog),(frog.orientation == LEFT ? NOFLAGS : ALLEGRO_FLIP_HORIZONTAL));
+                                                frog.x_pos,frog.lane,al_get_bitmap_width(side_frog),al_get_bitmap_height(side_frog),(frog.orientation == LEFT ? NOFLAGS : ALLEGRO_FLIP_HORIZONTAL));
         }
 
         else
@@ -445,17 +458,23 @@ void *output_thread(void* pointer)
 
         /**************************** DIBUJO VIDAS ********************************************/
 
-        for(i=0 ; i<pGameData->lives ; i++)
+        for(i=0 ; i < pGameData->lives ; i++)
         {
           al_draw_scaled_bitmap(livefrog,
                                                 al_get_bitmap_width(livefrog)/2,al_get_bitmap_height(livefrog)/2,al_get_bitmap_width(livefrog),al_get_bitmap_height(livefrog),
-                                                ((LIVE1_X)+i*LIVES_OFFSET),LIVES_Y,al_get_display_width(livefrog),al_get_display_height(livefrog),NOFLAGS);
+                                                ((LIVE1_X)+i*LIVES_OFFSET),LIVES_Y,al_get_bitmap_width(livefrog),al_get_bitmap_height(livefrog),NOFLAGS);
         }
+
+        /************************** DIBUJO EN WINSPOTS *********************************************/
+
+        //AGREGARRRRR
 
         /**************************** MIRROR DEL BACKBUFFER ********************************************/
         al_flip_display();                          // mirror del backbuffer
         dispTimer = false;                          // acknowledge
       }
+
+
     }
 
     else if( (pGameData->currentState->stateID == PAUSE_RESUME_ID || pGameData->currentState->stateID == PAUSE_RESTART_ID) && !pGameData->quitGame ) // En menú de pausa
@@ -466,14 +485,14 @@ void *output_thread(void* pointer)
         {
           al_draw_scaled_bitmap(arrow,
                                                 0,0,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),
-                                                PAUSE_RESUME_ID_X,PAUSE_RESUME_ID_Y,al_get_display_width(arrow),al_get_display_height(arrow),NOFLAGS);    // Dibujo arrow
+                                                PAUSE_RESUME_ID_X,PAUSE_RESUME_ID_Y,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),NOFLAGS);    // Dibujo arrow
         }
 
         else if(pGameData->currentState->stateID == PAUSE_RESTART_ID)
         {
           al_draw_scaled_bitmap(arrow,
                                                 0,0,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),
-                                                PAUSE_RESTART_ID_X,PAUSE_RESTART_ID_Y,al_get_display_width(arrow),al_get_display_height(arrow),NOFLAGS);    // Dibujo arrow
+                                                PAUSE_RESTART_ID_X,PAUSE_RESTART_ID_Y,al_get_bitmap_width(arrow),al_get_bitmap_height(arrow),NOFLAGS);    // Dibujo arrow
         }
 
         if(dispTimer)
@@ -481,6 +500,8 @@ void *output_thread(void* pointer)
           al_flip_display();
           dispTimer = false;
         }
+
+
     }
 
     else if( (pGameData->currentState->stateID == SAVE_SCORE_ID) && !pGameData->quitGame) // Terminó el juego y mi puntaje entró en el scoreboard
@@ -509,6 +530,8 @@ void *output_thread(void* pointer)
       }
 
     }
+
+
 
   }
 
@@ -552,6 +575,7 @@ void *output_thread(void* pointer)
 
 /*************************FUNCIONES AUXILIARES******************************/
 
+
 /********************************************************************************
 FUNCION checkBitmapcollision()
 Esta función chequea si existe superposición en los bitmaps de los autos y el de la rana,
@@ -580,7 +604,7 @@ int checkBitmapcollision(void *Cpointer, void *Fpointer, int NofCars) // agregar
 		{
 			for(j = ((p2carslist+i)->x_pos -(((p2carslist+i)->x_size)/2)) ; j <= ((p2carslist+i)->x_pos + (((p2carslist+i)->x_size)/2)) ; j++)
 			{
-				if( j == ((p2frog->x_frog)+((p2frog->x_size)/2)) || j == ((p2frog->x_frog)-((p2frog->x_size)/2))) // si alguno de los bordes de la rana están dentro del bitmap del auto...
+				if( j == ((p2frog->x_pos)+((p2frog->x_size)/2)) || j == ((p2frog->x_pos)-((p2frog->x_size)/2))) // si alguno de los bordes de la rana están dentro del bitmap del auto...
 				{
           return ((p2carslist+i)->lane); // devuelvo las coordenadas del carril donde hubo colisión
 				}
@@ -588,7 +612,7 @@ int checkBitmapcollision(void *Cpointer, void *Fpointer, int NofCars) // agregar
 		}
 	}
 
-  return 0: // devuelvo 0 si no hubo colisión
+  return 0; // devuelvo 0 si no hubo colisión
 }
 
 
@@ -615,16 +639,14 @@ void carsRoutine(void *Cpointer, void *Fpointer, int NofCars)
     {LANE1_Y,10,10,LEFT},
     {LANE2_Y,15,15,RIGHT},
     {LANE3_Y,40,40,LEFT},
-    {LANE4_Y,10,10.RIGHT},
+    {LANE4_Y,10,10,RIGHT},
     {LANE5_Y,35,35,LEFT},
-    {LANE6_Y,45,45,RIGHT},
     {BUFFER_LANE_Y,0,0,0},
+    {LANE6_Y,45,45,RIGHT},
     {LANE7_Y,30,30,LEFT},
     {LANE8_Y,10,10,RIGHT},
     {LANE9_Y,14,14,LEFT},
     {LANE10_Y,12,12,RIGHT},
-    {LANE11_Y,30,30,LEFT},
-    {LANE12_Y,20,20,RIGHT},
     {END_LANE_Y,0,0,0}
   };
 
@@ -698,72 +720,11 @@ void moveCars(void *Cpointer, void *Fpointer,int way, int NofCars, int lane)
 
   al_car_t *p2carslist = Cpointer;
 	al_frog_t *p2frog = Fpointer;
-  al_lane_t *p2lane = Lpointer;
   int i,j;
 
-if(lane == isInside(&p2carslist,&p2frog,NofCars) && lane < BUFFER_LANE_Y)                             // si la rana colisiona con el auto, y estamos en la parte superior del tablero
-{
-  if(way == LEFT)
+  if(lane == isInside(&p2carslist,&p2frog,NofCars) && lane < BUFFER_LANE_Y)                             // si la rana colisiona con el auto, y estamos en la parte superior del tablero
   {
-    if((p2frog->x_pos)-((p2frog->x_size)/2) <= FROG_X_MIN)                                                       //si la rana está en el borde izquierdo...
-    {
-      p2frog->x_pos == (FROG_X_MIN+((p2frog->x_size)/2));                                                        //se queda en su posición
-    }
-
-    else
-    {
-      p2frog->xpos--                                                                                               //muevo la rana a la izquierda
-    }
-  }
-
-  else    // entonces el carril se mueve a la derecha
-  {
-    if((p2frog->x_pos)+((p2frog->x_size)/2) >= FROG_X_MAX)                                //si la rana está en el borde derecho...
-    {
-      p2frog->x_pos == (FROG_X_MAX-((p2frog->x_size)/2));                                                        //se queda en su posición
-    }
-
-    else
-    {
-      p2frog->xpos++                                                                    //muevo la rana a la derecha
-    }
-  }
-
-}
-
-for(i=0 ; i<NofCars ; i++)                                                      // verifico cada uno de los autos
-{
-  if(way == LEFT && ((p2carslist+i)->lane == lane))                                         // si el auto está en el carril que quiero mover
-  {
-    if(((p2carslist->x_pos)+((p2carslist->x_size)/2)) <= FROG_X_MIN)                       // si el bitmap salio completamente del display por la izquierda, aparece por la derecha
-    {
-      (p2carslist+i)->x_pos == (FROG_X_MAX + ((p2carslist->x_size)/2));
-    }
-
-    else
-    {
-      (p2carslist+i)->x_pos--;                                                    // muevo el auto hacia la izquierda
-    }
-
-  }
-
-  else if((p2carslist+i)->way == RIGHT && ((p2carslist+i)->lane == lane))            // si el auto está en el carril que quiero mover
-  {
-    if(((p2carslist->x_pos)-((p2carslist->x_size)/2)) >= FROG_X_MAX)                       // si el bitmap salio completamente del display por la derecha, aparece por la izquierda.
-    {
-      (p2carslist+i)->x_pos == (FROG_X_MIN - ((p2carslist->x_size)/2));
-    }
-
-    else
-    {
-      (p2carslist+i)->x_pos++;                                                    // muevo el auto hacia la derecha
-    }
-  }
-
-
-  /*if(checkBitmapcollision(&p2carslist,&p2frog,NofCars) && (p2frog->lane > BUFFER_LANE_Y))  // si la rana colisiona con el auto, y estamos en la parte superior del tablero
-  {
-    if(getLaneWay(p2frog->lane) == LEFT)
+    if(way == LEFT)
     {
       if((p2frog->x_pos)-((p2frog->x_size)/2) <= FROG_X_MIN)                                                       //si la rana está en el borde izquierdo...
       {
@@ -772,7 +733,7 @@ for(i=0 ; i<NofCars ; i++)                                                      
 
       else
       {
-        p2frog->xpos--                                                                    //muevo la rana a la izquierda
+        p2frog->x_pos--;                                                                                              //muevo la rana a la izquierda
       }
     }
 
@@ -785,7 +746,7 @@ for(i=0 ; i<NofCars ; i++)                                                      
 
       else
       {
-        p2frog->xpos++                                                                    //muevo la rana a la derecha
+        p2frog->x_pos++;                                                                 //muevo la rana a la derecha
       }
     }
 
@@ -793,7 +754,7 @@ for(i=0 ; i<NofCars ; i++)                                                      
 
   for(i=0 ; i<NofCars ; i++)                                                      // verifico cada uno de los autos
   {
-    if((p2carslist+i)->way == LEFT)
+    if(way == LEFT && ((p2carslist+i)->lane == lane))                                         // si el auto está en el carril que quiero mover
     {
       if(((p2carslist->x_pos)+((p2carslist->x_size)/2)) <= FROG_X_MIN)                       // si el bitmap salio completamente del display por la izquierda, aparece por la derecha
       {
@@ -807,7 +768,7 @@ for(i=0 ; i<NofCars ; i++)                                                      
 
     }
 
-    else if((p2carslist+i)->way == RIGHT)
+    else if(way == RIGHT && ((p2carslist+i)->lane == lane))            // si el auto está en el carril que quiero mover
     {
       if(((p2carslist->x_pos)-((p2carslist->x_size)/2)) >= FROG_X_MAX)                       // si el bitmap salio completamente del display por la derecha, aparece por la izquierda.
       {
@@ -820,7 +781,7 @@ for(i=0 ; i<NofCars ; i++)                                                      
       }
     }
 
-  }*/
+  }
 }
 
 
@@ -853,8 +814,8 @@ int isInside(void *Cpointer, void *Fpointer, int NofCars) // agregar proteccion 
 	{
 		if(p2frog->lane == (p2carslist+i)->lane) // si la rana y el auto están en el mismo carril...
 		{
-      caredgeMIN = (((p2carslist+i)->x_pos)-0.5*((p2carslist+i)->x_size)); // asigno bordes del tronco
-      caredgeMAX = (((p2carslist+i)->x_pos)+0.5*((p2carslist+i)->x_size)); // para mejor lectura del argumento del condicional
+      int caredgeMIN = (((p2carslist+i)->x_pos)-0.5*((p2carslist+i)->x_size)); // asigno bordes del tronco
+      int caredgeMAX = (((p2carslist+i)->x_pos)+0.5*((p2carslist+i)->x_size)); // para mejor lectura del argumento del condicional
 
 			if((frogedge1 >= caredgeMIN )&&(frogedge1 <= caredgeMAX)&&(frogedge2 >= caredgeMIN)&&(frogedge2 <= caredgeMAX))
       {
@@ -863,36 +824,9 @@ int isInside(void *Cpointer, void *Fpointer, int NofCars) // agregar proteccion 
 		}
 	}
 
-  return 0: // devuelvo 0 si la rana no está contenida en un tronco
+  return 0; // devuelvo 0 si la rana no está contenida en un tronco
 }
-/********************************************************************************
-FUNCION getLaneWay()
-Esta función nos dice para que lado se mueve un determinado carril
 
-RECIBE:
-  + coordenadas del carril a consultar
-  + puntero void a arrego de autos
-  + número de autos que están en el arreglo
-
-DEVUELVE:
-  + constantes LEFT o RIGHT, dependiendo del sentido del carril
-
-********************************************************************************/
-int getLaneWay(void *Cpointer, int lane, int NofCars)
-{
-  al_car_t *p2carslist = Cpointer;
-  int i,j,k;
-
-  for(i=0 ; i<NofCars ; i++)
-  {
-    if((p2carslist+i)->lane == lane)
-    {
-      return((p2carslist+i)->way);
-    }
-  }
-  fprintf(stderr, "No se encontró sentido para el carril solicitado\n");
-  exit(-1);
-}
 
 /***************************************************
 FUNCION moveFrog()
@@ -906,11 +840,11 @@ DEVUELVE:
   + nada
 
 ****************************************************/
-void moveFrog(uint8_t where,frog_t *frogCoords)
+void moveFrog(uint8_t where,al_frog_t *frogCoords)
 {
   switch(where)
   {
-      case FROG_UP:
+      case UP:
           if(frogCoords->lane > END_LANE_Y)
           {
               frogCoords->lane-= FROGSTEP_Y;
@@ -922,7 +856,7 @@ void moveFrog(uint8_t where,frog_t *frogCoords)
           frogCoords->orientation = UP;
           break;
 
-      case FROG_DOWN:
+      case DOWN:
           if(frogCoords->lane < START_LANE_Y)
           {
               frogCoords->lane += FROGSTEP_Y;
@@ -934,26 +868,26 @@ void moveFrog(uint8_t where,frog_t *frogCoords)
           frogCoords->orientation = DOWN;
           break;
 
-      case FROG_RIGHT:
-          if(frogCoords->x + frogCoords->x_size < FROG_X_MAX)
+      case RIGHT:
+          if(frogCoords->x_pos + frogCoords->x_size < FROG_X_MAX)
           {
-              frogCoords->x += FROGSTEP_X;
+              frogCoords->x_pos += FROGSTEP_X;
           }
-          else if(frogCoords->x + frogCoords->x_size/2 > FROG_X_MAX)
+          else if(frogCoords->x_pos + frogCoords->x_size/2 > FROG_X_MAX)
           {
-              frogCoords->x = (FROG_X_MAX - frogCoords->x_size/2);
+              frogCoords->x_pos = (FROG_X_MAX - frogCoords->x_size/2);
           }
           frogCoords->orientation = RIGHT;
           break;
 
-      case FROG_LEFT:
-          if(frogCoords->x - frogCoords->x_size > FROG_X_MIN)
+      case LEFT:
+          if(frogCoords->x_pos - frogCoords->x_size > FROG_X_MIN)
           {
-              frogCoords->x -= FROGSTEP_X;
+              frogCoords->x_pos -= FROGSTEP_X;
           }
-          else if(frogCoords->x - frogCoords->x_size/2 < FROG_X_MIN)   //programacion defensiva
+          else if(frogCoords->x_pos - frogCoords->x_size/2 < FROG_X_MIN)   //programacion defensiva
           {
-              frogCoords->x = (FROG_X_MIN + frogCoords->x_size/2);
+              frogCoords->x_pos = (FROG_X_MIN + frogCoords->x_size/2);
           }
           frogCoords->orientation = LEFT;
           break;

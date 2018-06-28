@@ -34,7 +34,7 @@
 #define NOFLAGS 0
 
 /********* COORDINATES CONSTANTS ***********/
-#define ARROW_X
+/*#define ARROW_X
 #define START_PLAY_X // coordenadas de los strings para colocar el arrow pointer
 #define START_PLAY_Y
 #define START_SCOREBOARD_X
@@ -45,6 +45,13 @@
 #define PAUSE_RESTART_ID_Y
 #define PAUSE_RESUME_ID_X
 #define PAUSE_RESUME_ID_Y
+
+#define WIN_SPOT_X1
+#define WIN_SPOT_X2
+#define WIN_SPOT_X3
+#define WIN_SPOT_X4
+#define WIN_SPOT_X5*/
+
 
 #define FROGSTEP_X FROG_W
 #define FROGSTEP_Y 49
@@ -57,18 +64,18 @@
 #define FROG_Y_MIN  END_LANE_Y
 
 #define START_LANE_Y  718          // lane inferior
-#define LANE1_Y (START_LANE - 1*FROGSTEP_X)                // autos (4 carriles)
-#define LANE2_Y (START_LANE - 2*FROGSTEP_X)
-#define LANE3_Y (START_LANE - 3*FROGSTEP_X)
-#define LANE4_Y (START_LANE - 4*FROGSTEP_X)
-#define LANE5_Y (START_LANE - 5*FROGSTEP_X)
-#define BUFFER_LANE_Y (START_LANE - 6*FROGSTEP_X)          // lane central
-#define LANE6_Y (START_LANE - 7*FROGSTEP_X)               // troncos (5 carriles)
-#define LANE7_Y (START_LANE - 8*FROGSTEP_X)
-#define LANE8_Y (START_LANE - 9*FROGSTEP_X)
-#define LANE9_Y (START_LANE - 10*FROGSTEP_X)
-#define LANE10_Y (START_LANE - 11*FROGSTEP_X)
-#define END_LANE_Y  (START_LANE - 12*FROGSTEP_X)             // lane superior
+#define LANE1_Y (START_LANE_Y - 1*FROGSTEP_X)                // autos (4 carriles)
+#define LANE2_Y (START_LANE_Y - 2*FROGSTEP_X)
+#define LANE3_Y (START_LANE_Y - 3*FROGSTEP_X)
+#define LANE4_Y (START_LANE_Y - 4*FROGSTEP_X)
+#define LANE5_Y (START_LANE_Y - 5*FROGSTEP_X)
+#define BUFFER_LANE_Y (START_LANE_Y - 6*FROGSTEP_X)          // lane central
+#define LANE6_Y (START_LANE_Y - 7*FROGSTEP_X)               // troncos (5 carriles)
+#define LANE7_Y (START_LANE_Y - 8*FROGSTEP_X)
+#define LANE8_Y (START_LANE_Y - 9*FROGSTEP_X)
+#define LANE9_Y (START_LANE_Y - 10*FROGSTEP_X)
+#define LANE10_Y (START_LANE_Y - 11*FROGSTEP_X)
+#define END_LANE_Y  (START_LANE_Y - 12*FROGSTEP_X)             // lane superior
 
 #define LIVES_Y 765
 #define LIVE1_X 28
@@ -122,20 +129,26 @@ typedef struct frog
   uint8_t orientation;
   uint8_t x_size;
   uint8_t y_size;
+  uint8_t winSpots[5];
 }al_frog_t;
 
 typedef struct lane
 {
-  uint8_t number;
+  uint8_t lane;
   uint8_t divider;
   uint8_t dividerMax;
   bool way;
 }al_lane_t;
 
+typedef struct lastLane
+{
+
+}al_lastLane_t;
+
 
 
 enum orientation {LEFT,RIGHT,UP,DOWN};    // enum de direcciones hacia las que se puede mover la rana
-enum carType {ELECTRICCAR,RACECAR,TRACTOR,TRUCK,WOOD,LONG_WOOD,SHORT_WOOD};    // enum  de los tipos de bitmap auto
+enum carType {ELECTRICCAR = 1,RACECAR,TRACTOR,TRUCK,WOOD,LONG_WOOD,SHORT_WOOD,BLOCK};    // enum  de los tipos de bitmap auto
 
 /*******************************************************************************
  * VARIABLE PROTOTYPES WITH GLOBAL SCOPE
@@ -148,12 +161,6 @@ enum carType {ELECTRICCAR,RACECAR,TRACTOR,TRUCK,WOOD,LONG_WOOD,SHORT_WOOD};    /
  * FUNCTION PROTOTYPES WITH GLOBAL SCOPE
  ******************************************************************************/
 void *output_thread(void* pointer);
-int checkBitmapcollision(void *Cpointer, void *Fpointer, int NofCars);
-void carsRoutine(void *Cpointer, void *Fpointer, void *Lpointer, int NofCars);
-void moveCars(void *Cpointer, void *Fpointer,int way, int NofCars, int lane);
-int getLaneWay(void *Cpointer, int lane, int NofCars);
-void moveFrog(uint8_t where,frog_t *frogCoords);
-int isInside(void *Cpointer, void *Fpointer, int NofCars);
 
 /**
  * @brief TODO: completar descripcion
