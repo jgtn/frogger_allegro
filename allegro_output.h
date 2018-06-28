@@ -1,4 +1,4 @@
-/***************************************************************************//**
+FROGSTEP_Y/***************************************************************************//**
   @file     allegro_output
   @brief    m
   @author   +Nombre del autor (ej: Salvador Allende)+
@@ -64,18 +64,18 @@
 #define FROG_Y_MIN  END_LANE_Y
 
 #define START_LANE_Y  718          // lane inferior
-#define LANE1_Y (START_LANE_Y - 1*FROGSTEP_X)                // autos (4 carriles)
-#define LANE2_Y (START_LANE_Y - 2*FROGSTEP_X)
-#define LANE3_Y (START_LANE_Y - 3*FROGSTEP_X)
-#define LANE4_Y (START_LANE_Y - 4*FROGSTEP_X)
-#define LANE5_Y (START_LANE_Y - 5*FROGSTEP_X)
-#define BUFFER_LANE_Y (START_LANE_Y - 6*FROGSTEP_X)          // lane central
-#define LANE6_Y (START_LANE_Y - 7*FROGSTEP_X)               // troncos (5 carriles)
-#define LANE7_Y (START_LANE_Y - 8*FROGSTEP_X)
-#define LANE8_Y (START_LANE_Y - 9*FROGSTEP_X)
-#define LANE9_Y (START_LANE_Y - 10*FROGSTEP_X)
-#define LANE10_Y (START_LANE_Y - 11*FROGSTEP_X)
-#define END_LANE_Y  (START_LANE_Y - 12*FROGSTEP_X)             // lane superior
+#define LANE1_Y (START_LANE_Y - 1*FROGSTEP_Y)                // autos (4 carriles)
+#define LANE2_Y (START_LANE_Y - 2*FROGSTEP_Y)
+#define LANE3_Y (START_LANE_Y - 3*FROGSTEP_Y)
+#define LANE4_Y (START_LANE_Y - 4*FROGSTEP_Y)
+#define LANE5_Y (START_LANE_Y - 5*FROGSTEP_Y)
+#define BUFFER_LANE_Y (START_LANE_Y - 6*FROGSTEP_Y)          // lane central
+#define LANE6_Y (START_LANE_Y - 7*FROGSTEP_Y)               // troncos (5 carriles)
+#define LANE7_Y (START_LANE_Y - 8*FROGSTEP_Y)
+#define LANE8_Y (START_LANE_Y - 9*FROGSTEP_Y)
+#define LANE9_Y (START_LANE_Y - 10*FROGSTEP_Y)
+#define LANE10_Y (START_LANE_Y - 11*FROGSTEP_Y)
+#define END_LANE_Y  (START_LANE_Y - 12*FROGSTEP_Y)             // lane superior
 
 #define LIVES_Y 765
 #define LIVE1_X 28
@@ -116,27 +116,27 @@
 
 typedef struct car  //  estructura que contiene datos de los bitmaps asociados a los autos/troncos que se mueven
 {
-  uint8_t x_pos; // coordenadas al CENTRO del carril ( y del bitmap)
-  uint8_t lane;   // número de carril
-  uint8_t x_size; // largo del bitmap, para analizar colisiones
-  uint8_t type;
+  uint16_t x_pos; // coordenadas al CENTRO del carril ( y del bitmap)
+  uint16_t lane;   // número de carril
+  uint16_t x_size; // largo del bitmap, para analizar colisiones
+  uint16_t type;
 } al_car_t;
 
 typedef struct frog
 {
-  uint8_t x_pos;
-  uint8_t lane;
-  uint8_t orientation;
-  uint8_t x_size;
-  uint8_t y_size;
-  uint8_t winSpots[5];
+  uint16_t x_pos;
+  uint16_t lane;
+  uint16_t orientation;
+  uint16_t x_size;
+  uint16_t y_size;
+  uint16_t winSpots[5];
 }al_frog_t;
 
 typedef struct lane
 {
-  uint8_t lane;
-  uint8_t divider;
-  uint8_t dividerMax;
+  uint16_t lane;
+  uint16_t divider;
+  uint16_t dividerMax;
   bool way;
 }al_lane_t;
 

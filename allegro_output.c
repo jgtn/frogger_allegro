@@ -235,10 +235,6 @@ void *output_thread(void* pointer)
   }
 
 
-  /********************INICIALIZACION DISPLAY*******************************/
-
-  al_clear_to_color(BLACK);                           //macro definida en el header
-  al_flip_display();                                 //inicializo display en negro
 
   /******************INICICIALIZACIÓN DE JUEGO*********************/
   al_frog_t frog = {.x_pos = INIT_X, .lane = INIT_Y, .orientation = UP, .x_size = FROG_W, .y_size = FROG_H}; // inicializo estructura rana
@@ -322,7 +318,7 @@ void *output_thread(void* pointer)
         /*if(pGameData->lives--)
         {
           mostrar(calavera);
-          al_flip_display;
+
 
         }*/
         if( !emit_event(pGameData->pEventQueue,COLLISION_EVENT) )   //si la rana choco, le avisa al kernel
@@ -338,7 +334,7 @@ void *output_thread(void* pointer)
         /*if(pGameData->lives--)
         {
           mostrar(calavera);
-          al_flip_display;
+
 
         }*/
         if( !emit_event(pGameData->pEventQueue,COLLISION_EVENT) )   //si la rana choco, le avisa al kernel
@@ -379,9 +375,7 @@ void *output_thread(void* pointer)
 
       if(dispTimer)                                           // imprimo tablero
       {
-        /**************************** DIBUJO BACKGROUND ********************************************/
-        al_clear_to_color(BLACK);                             // borro display (backbuffer)
-        al_draw_bitmap(game_bknd,0,0,NOFLAGS);           // Dibujo background de juego
+
         /**************************** DIBUJO AUTOS ********************************************/
         int i;
         for(i=0 ; i<NOFCARS ; i++)
