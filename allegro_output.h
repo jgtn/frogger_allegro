@@ -153,6 +153,7 @@ void carsRoutine(void *Cpointer, void *Fpointer, void *Lpointer, int NofCars);
 void moveCars(void *Cpointer, void *Fpointer,int way, int NofCars, int lane);
 int getLaneWay(void *Cpointer, int lane, int NofCars);
 void moveFrog(uint8_t where,frog_t *frogCoords);
+int isInside(void *Cpointer, void *Fpointer, int NofCars);
 
 /**
  * @brief TODO: completar descripcion
