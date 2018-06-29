@@ -1,4 +1,4 @@
-FROGSTEP_Y/***************************************************************************//**
+/***************************************************************************//**
   @file     allegro_output
   @brief    m
   @author   +Nombre del autor (ej: Salvador Allende)+
@@ -25,13 +25,14 @@ FROGSTEP_Y/*********************************************************************
 #define DWIDTH  700
 #define DHEIGHT 800
 
-#define NOFCARS 10
+#define NOFCARS 15
 #define BLACK (al_map_rgb(0,0,0))
 #define WHITE (al_map_rgb(255,255,255))
 #define FPS 60
-#define CARS_TIMER 1
-#define NOFLANES 15
+#define CARS_TIMER 0.01
+#define NOFLANES 13
 #define NOFLAGS 0
+#define CARS_MV 1
 
 /********* COORDINATES CONSTANTS ***********/
 /*#define ARROW_X
@@ -53,7 +54,7 @@ FROGSTEP_Y/*********************************************************************
 #define WIN_SPOT_X5*/
 
 
-#define FROGSTEP_X FROG_W
+#define FROGSTEP_X (0.6*FROG_W) // cambiando (ajustar)
 #define FROGSTEP_Y 49
 
 #define INIT_X  350            // donde arranca la rana
@@ -81,32 +82,32 @@ FROGSTEP_Y/*********************************************************************
 #define LIVE1_X 28
 #define LIVES_OFFSET  28
 
-#define RACECAR_W 49
-#define RACECAR_H 43
+#define RACECAR_W (al_get_bitmap_width(racecar))//49
+#define RACECAR_H (al_get_bitmap_height(racecar))//43
 
-#define TRACTOR_W 42
-#define TRACTOR_H 36
+#define TRACTOR_W (al_get_bitmap_width(tractor))//42
+#define TRACTOR_H (al_get_bitmap_height(tractor))//36
 
-#define ELECTRICCAR_W 46
-#define ELECTRICCAR_H 30
+#define ELECTRICCAR_W (al_get_bitmap_width(electriccar))//46
+#define ELECTRICCAR_H (al_get_bitmap_height(electriccar))//30
 
-#define TRUCK_W 82
-#define TRUCK_H 30
+#define TRUCK_W (al_get_bitmap_width(truck))//82
+#define TRUCK_H (al_get_bitmap_height(truck))//30
 
-#define WOOD_W 176
-#define WOOD_H 30
+#define WOOD_W (al_get_bitmap_width(wood))//176
+#define WOOD_H (al_get_bitmap_height(wood))//30
 
-#define SHORTWOOD_W 128
-#define SHORTWOOD_H 30
+#define SHORT_WOOD_W (al_get_bitmap_width(short_wood))//128
+#define SHORT_WOOD_H (al_get_bitmap_height(short_wood))//30
 
-#define LONGWOOD_W 274
-#define LONGWOOD_H 30
+#define LONG_WOOD_W (al_get_bitmap_width(long_wood))//274
+#define LONG_WOOD_H (al_get_bitmap_height(long_wood))//30
 
 #define FROG_W 44
 #define FROG_H 33
 
-#define LIVEFROG_W 21
-#define LIVEFROG_H 21
+#define LIVEFROG_W (al_get_bitmap_width(livefrog))//21
+#define LIVEFROG_H (al_get_bitmap_height(livefrog))//21
 
 
 
@@ -116,10 +117,11 @@ FROGSTEP_Y/*********************************************************************
 
 typedef struct car  //  estructura que contiene datos de los bitmaps asociados a los autos/troncos que se mueven
 {
-  uint16_t x_pos; // coordenadas al CENTRO del carril ( y del bitmap)
-  uint16_t lane;   // número de carril
-  uint16_t x_size; // largo del bitmap, para analizar colisiones
-  uint16_t type;
+  int16_t x_pos; // coordenadas al CENTRO del carril ( y del bitmap)
+  int16_t lane;   // número de carril
+  int16_t x_size; // largo del bitmap, para analizar colisiones
+  int16_t y_size;
+  int16_t type;
 } al_car_t;
 
 typedef struct frog
