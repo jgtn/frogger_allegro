@@ -12,7 +12,7 @@ Devuelve:
 ******************************************************************/
 int checkBitmapcollision(void *Cpointer, void *Fpointer, int NofCars);
 void carsRoutine(void *Cpointer, void *Fpointer, int NofCars);
-void moveFrog(uint8_t where,al_frog_t *frogCoords);
+void moveFrog(uint16_t where,al_frog_t *frogCoords);
 int isInside(void *Cpointer, void *Fpointer, int NofCars);
 
 
@@ -75,6 +75,8 @@ void *output_thread(void* pointer)
 
   al_register_event_source(output_queue, al_get_timer_event_source(al_display_timer));  // regsitro ambos timers como generadores de eventos de Allegro
   al_register_event_source(output_queue, al_get_timer_event_source(al_cars_timer));
+  al_register_event_source(output_queue, al_get_display_event_source(display));         // registro display como ev source
+
 
 
 /***********************CARGA DE BITMAPS*****************************/
@@ -383,46 +385,34 @@ void *output_thread(void* pointer)
           switch((carsArray+i)->type)
           {
             case RACECAR:
-              al_draw_scaled_bitmap(racecar,
-                                                    al_get_bitmap_width(racecar)/2,al_get_bitmap_height(racecar)/2,al_get_bitmap_width(racecar),al_get_bitmap_height(racecar),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(racecar),al_get_bitmap_height(racecar),NOFLAGS);
+              al_draw_rotated_bitmap(racecar,al_get_bitmap_width(racecar)/2,al_get_bitmap_height(racecar)/2,(carsArray+i)->x_pos,(carsArray+i)->lane,0,NOFLAGS);
               break;
 
             case ELECTRICCAR:
-              al_draw_scaled_bitmap(electriccar,
-                                                    al_get_bitmap_width(electriccar)/2,al_get_bitmap_height(electriccar)/2,al_get_bitmap_width(electriccar),al_get_bitmap_height(electriccar),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(electriccar),al_get_bitmap_height(electriccar),NOFLAGS);
+              al_draw_rotated_bitmap(electriccar,al_get_bitmap_width(electriccar)/2,al_get_bitmap_height(electriccar)/2,(carsArray+i)->x_pos,(carsArray+i)->lane,0,NOFLAGS);
               break;
 
             case TRACTOR:
-              al_draw_scaled_bitmap(electriccar,
-                                                    al_get_bitmap_width(tractor)/2,al_get_bitmap_height(tractor)/2,al_get_bitmap_width(tractor),al_get_bitmap_height(tractor),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(tractor),al_get_bitmap_height(tractor),NOFLAGS);
+              al_draw_rotated_bitmap(tractor,al_get_bitmap_width(tractor)/2,al_get_bitmap_height(tractor)/2,(carsArray+i)->x_pos,(carsArray+i)->lane,0,NOFLAGS);
               break;
 
             case TRUCK:
-              al_draw_scaled_bitmap(truck,
-                                                    al_get_bitmap_width(truck)/2,al_get_bitmap_height(truck)/2,al_get_bitmap_width(truck),al_get_bitmap_height(truck),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(truck),al_get_bitmap_height(truck),NOFLAGS);
+              al_draw_rotated_bitmap(truck,al_get_bitmap_width(truck)/2,al_get_bitmap_height(truck)/2,(carsArray+i)->x_pos,(carsArray+i)->lane,0,NOFLAGS);
+
               break;
 
             case WOOD:
-              al_draw_scaled_bitmap(wood,
-                                                    al_get_bitmap_width(wood)/2,al_get_bitmap_height(wood)/2,al_get_bitmap_width(wood),al_get_bitmap_height(wood),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(wood),al_get_bitmap_height(wood),NOFLAGS);
+              al_draw_rotated_bitmap(wood,al_get_bitmap_width(wood)/2,al_get_bitmap_height(wood)/2,(carsArray+i)->x_pos,(carsArray+i)->lane,0,NOFLAGS);
               break;
 
             case LONG_WOOD:
-              al_draw_scaled_bitmap(wood,
-                                                    al_get_bitmap_width(long_wood)/2,al_get_bitmap_height(long_wood)/2,al_get_bitmap_width(long_wood),al_get_bitmap_height(long_wood),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(long_wood),al_get_bitmap_height(long_wood),NOFLAGS);
+              al_draw_rotated_bitmap(long_wood,al_get_bitmap_width(long_wood)/2,al_get_bitmap_height(long_wood)/2,(carsArray+i)->x_pos,(carsArray+i)->lane,0,NOFLAGS);
               break;
 
             case SHORT_WOOD:
-              al_draw_scaled_bitmap(wood,
-                                                    al_get_bitmap_width(short_wood)/2,al_get_bitmap_height(short_wood)/2,al_get_bitmap_width(short_wood),al_get_bitmap_height(short_wood),
-                                                    (carsArray+i)->x_pos,(carsArray+i)->lane,al_get_bitmap_width(short_wood),al_get_bitmap_height(short_wood),NOFLAGS);
+              al_draw_rotated_bitmap(short_wood,al_get_bitmap_width(short_wood)/2,al_get_bitmap_height(short_wood)/2,(carsArray+i)->x_pos,(carsArray+i)->lane,0,NOFLAGS);
               break;
+
 
           }
         }
@@ -431,16 +421,14 @@ void *output_thread(void* pointer)
 
         if(frog.orientation == UP || frog.orientation == DOWN) // imprimo bitmap en función de la orientación de la rana
         {
-          al_draw_scaled_bitmap(vertical_frog,
-                                                al_get_bitmap_width(vertical_frog)/2,al_get_bitmap_height(vertical_frog)/2,al_get_bitmap_width(vertical_frog),al_get_bitmap_height(vertical_frog),
-                                                frog.x_pos,frog.lane,al_get_bitmap_width(vertical_frog),al_get_bitmap_height(vertical_frog),(frog.orientation == UP ? NOFLAGS : ALLEGRO_FLIP_VERTICAL));
+          al_draw_rotated_bitmap(vertical_frog,al_get_bitmap_width(vertical_frog)/2,al_get_bitmap_height(vertical_frog)/2,frog.x_pos,frog.lane,0,(frog.orientation == UP ? NOFLAGS : ALLEGRO_FLIP_VERTICAL));
+
         }
 
         else if(frog.orientation == LEFT || frog.orientation == RIGHT)
         {
-          al_draw_scaled_bitmap(side_frog,
-                                                al_get_bitmap_width(side_frog)/2,al_get_bitmap_height(side_frog)/2,al_get_bitmap_width(side_frog),al_get_bitmap_height(side_frog),
-                                                frog.x_pos,frog.lane,al_get_bitmap_width(side_frog),al_get_bitmap_height(side_frog),(frog.orientation == LEFT ? NOFLAGS : ALLEGRO_FLIP_HORIZONTAL));
+
+          al_draw_rotated_bitmap(side_frog,al_get_bitmap_width(side_frog)/2,al_get_bitmap_height(side_frog)/2,frog.x_pos,frog.lane,0,(frog.orientation == LEFT ? NOFLAGS : ALLEGRO_FLIP_HORIZONTAL));
         }
 
         else
@@ -590,7 +578,7 @@ int checkBitmapcollision(void *Cpointer, void *Fpointer, int NofCars) // agregar
 {
 	al_car_t *p2carslist = Cpointer;
 	al_frog_t *p2frog = Fpointer;
-	uint8_t i,j;
+	uint16_t i,j;
 
 	for(i=0 ; i<NofCars ; i++) // barrido de la lista de autos
 	{
@@ -800,9 +788,9 @@ int isInside(void *Cpointer, void *Fpointer, int NofCars) // agregar proteccion 
 {
 	al_car_t *p2carslist = Cpointer;
 	al_frog_t *p2frog = Fpointer;
-  uint8_t frogedge1 = (p2frog->x_pos)+0.5*(p2frog->x_size);
-  uint8_t frogedge2 = (p2frog->x_pos)-0.5*(p2frog->x_size);
-	uint8_t i;
+  uint16_t frogedge1 = (p2frog->x_pos)+0.5*(p2frog->x_size);
+  uint16_t frogedge2 = (p2frog->x_pos)-0.5*(p2frog->x_size);
+	uint16_t i;
 
 	for(i=0 ; i<NofCars ; i++) // barrido de la lista de autos
 	{
@@ -834,7 +822,7 @@ DEVUELVE:
   + nada
 
 ****************************************************/
-void moveFrog(uint8_t where,al_frog_t *frogCoords)
+void moveFrog(uint16_t where,al_frog_t *frogCoords)
 {
   switch(where)
   {
